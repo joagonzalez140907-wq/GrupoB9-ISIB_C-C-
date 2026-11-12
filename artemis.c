@@ -1,26 +1,9 @@
-/* ============================================================
-   artemis.c
-   Logica del simulador: calculos fisicos, etapas de la mision,
-   desafio y reporte final.
-
-   Modelo fisico (simplificado):
-   - La Tierra y la Luna se consideran quietas.
-   - La nave se mueve sobre la linea que une sus centros.
-   - Solo actuan la gravedad de la Tierra y la de la Luna.
-   - No hay rozamiento ni otras fuerzas (motores apagados).
-   Los limites de este modelo se muestran al usuario en la
-   opcion 9 del menu (funcion mostrarSupuestos).
-
-   UTN FRRe - Algoritmos y Estructuras de Datos - K1.2 - Grupo B9
-   ============================================================ */
 
 #include <stdio.h>
 #include <math.h>
 #include "artemis.h"
 #include "validaciones.h"
 
-/* Nombres de las etapas. Es una tabla de textos: 4 filas (una
-   por etapa) de hasta 45 caracteres cada una. */
 static const char NOMBRES_ETAPAS[CANT_ETAPAS][45] = {
     "Etapa A - Inercia con motores apagados",
     "Etapa B - Energia cinetica inicial",
@@ -28,20 +11,13 @@ static const char NOMBRES_ETAPAS[CANT_ETAPAS][45] = {
     "Etapa D - Comparacion ida y vuelta"
 };
 
-/* ============================================================
-   Funciones internas (solo se usan dentro de este archivo)
-   ============================================================ */
 
-/* Calcula con que velocidad pasa la nave por un punto ubicado a
-   la distancia d del centro de la Tierra, usando conservacion de
-   la energia. Devuelve 1 si la nave llega a ese punto y 0 si no
-   llega. La velocidad se deja en la variable apuntada. */
 static int velocidadEnDistancia(const Mision *m, double d, double *velocidad)
 {
     double r0 = RADIO_TIERRA + m->altura;
-    double cineticaInicial;   /* J/kg al terminar la TLI           */
-    double subida;            /* J/kg que "cuesta" llegar hasta d  */
-    double cineticaEnD;       /* J/kg que le quedan en d           */
+    double cineticaInicial;  
+    double subida;           
+    double cineticaEnD;      
 
     cineticaInicial = 0.5 * m->velocidad * m->velocidad;
     subida = potencialPorKg(d, m->distancia)
@@ -56,8 +32,7 @@ static int velocidadEnDistancia(const Mision *m, double d, double *velocidad)
     return 1;
 }
 
-/* Busca, avanzando de a pasos, hasta que distancia del centro
-   de la Tierra llega la nave antes de detenerse. */
+
 static double alcanceMaximo(const Mision *m, double limite)
 {
     double d = RADIO_TIERRA + m->altura;
@@ -71,9 +46,6 @@ static double alcanceMaximo(const Mision *m, double limite)
     return d;
 }
 
-/* ============================================================
-   Inicio
-   ============================================================ */
 
 void mostrarPresentacion(void)
 {
@@ -99,7 +71,7 @@ void mostrarPresentacion(void)
     printf("   - y probar el desafio de inyeccion de precision.\n");
 }
 
-/* Carga en la mision los valores oficiales del enunciado. */
+
 void inicializarMision(Mision *m)
 {
     m->masa      = MASA_OFICIAL;
@@ -108,7 +80,7 @@ void inicializarMision(Mision *m)
     m->distancia = DISTANCIA_OFICIAL;
 }
 
-/* Deja la sesion "en cero": ninguna etapa vista, sin intentos. */
+
 void inicializarSesion(Sesion *s)
 {
     int i;
@@ -121,9 +93,7 @@ void inicializarSesion(Sesion *s)
     s->desafioLogrado = 0;
 }
 
-/* ============================================================
-   Datos de la mision
-   ============================================================ */
+
 
 void mostrarDatos(const Mision *m)
 {
@@ -146,8 +116,7 @@ void mostrarDatos(const Mision *m)
     }
 }
 
-/* Submenu para cambiar los datos. Recibe la mision por puntero
-   porque tiene que modificar la variable original de main. */
+
 void configurarMision(Mision *m)
 {
     int opcion;
@@ -199,20 +168,14 @@ void configurarMision(Mision *m)
     } while (opcion != 0);
 }
 
-/* ============================================================
-   Calculos fisicos
-   ============================================================ */
 
-/* Energia cinetica: K = 1/2 * m * v^2  (resultado en joules). */
+
 double energiaCinetica(double masa, double velocidad)
 {
     return 0.5 * masa * velocidad * velocidad;
 }
 
-/* Energia potencial gravitatoria por cada kg de nave, en un punto
-   ubicado a r metros del centro de la Tierra. Se suman el aporte
-   de la Tierra y el de la Luna:
-       U/m = - G*MT/r - G*ML/(D - r)                            */
+
 double potencialPorKg(double r, double distancia)
 {
     double tierra = -G_UNIVERSAL * MASA_TIERRA / r;
@@ -221,8 +184,7 @@ double potencialPorKg(double r, double distancia)
     return tierra + luna;
 }
 
-/* Aceleracion neta de la gravedad sobre la nave. Positiva = la
-   nave es frenada (gana la Tierra); cero = punto de equilibrio. */
+
 double gravedadNeta(double r, double distancia)
 {
     double tierra = G_UNIVERSAL * MASA_TIERRA / (r * r);
@@ -232,29 +194,24 @@ double gravedadNeta(double r, double distancia)
     return tierra - luna;
 }
 
-/* Punto donde la atraccion de la Tierra y la de la Luna valen lo
-   mismo. Como la funcion tiene que entregar DOS resultados, los
-   devuelve a traves de punteros.
-       x = D / (1 + raiz(ML / MT))                              */
+                
 void puntoEquilibrio(double distancia, double *desdeTierra, double *desdeLuna)
 {
     *desdeTierra = distancia / (1.0 + sqrt(MASA_LUNA / MASA_TIERRA));
     *desdeLuna   = distancia - *desdeTierra;
 }
 
-/* Calcula todos los resultados de las consignas B, C y D para la
-   mision m y los guarda en la estructura apuntada por r. */
+
 void calcularResultados(const Mision *m, Resultados *r)
 {
-    double sobrante;   /* J/kg que sobran (+) o faltan (-) */
-
+    double sobrante;  
     r->radioInicial = RADIO_TIERRA + m->altura;
 
-    /* --- Consigna B --- */
+   
     r->energiaCinetica = energiaCinetica(m->masa, m->velocidad);
     r->cineticaPorKg   = r->energiaCinetica / m->masa;
 
-    /* --- Consigna C --- */
+   
     puntoEquilibrio(m->distancia, &r->equilibrioTierra, &r->equilibrioLuna);
 
     r->potencialInicial = potencialPorKg(r->radioInicial, m->distancia);
@@ -267,7 +224,7 @@ void calcularResultados(const Mision *m, Resultados *r)
     r->trabajoDesdeOrbita = r->trabajoGravedad
                           - 0.5 * r->velocidadOrbital * r->velocidadOrbital;
 
-    /* Datos de referencia para interpretar el modelo (opcion 9). */
+   
     r->velocidadEscape = sqrt(2.0 * G_UNIVERSAL * MASA_TIERRA
                               / r->radioInicial);
     r->puntoL1         = FRACCION_L1 * m->distancia;
@@ -275,20 +232,20 @@ void calcularResultados(const Mision *m, Resultados *r)
     sobrante = r->cineticaPorKg - r->trabajoGravedad;
 
     if (sobrante >= 0) {
-        /* La energia cinetica alcanza: no hace falta trabajo extra. */
+       
         r->llega            = 1;
         r->trabajoExtra     = 0.0;
         r->velocidadLlegada = sqrt(2.0 * sobrante);
         r->alcance          = r->equilibrioTierra;
     } else {
-        /* No alcanza: lo que falta es el trabajo adicional minimo. */
+       
         r->llega            = 0;
         r->trabajoExtra     = -sobrante;
         r->velocidadLlegada = 0.0;
         r->alcance          = alcanceMaximo(m, r->equilibrioTierra);
     }
 
-    /* --- Consigna D --- */
+   
     r->trabajoDesdeTierra = r->potencialEquilibrio
                           - potencialPorKg(RADIO_TIERRA, m->distancia);
     r->trabajoDesdeLuna   = r->potencialEquilibrio
@@ -299,9 +256,7 @@ void calcularResultados(const Mision *m, Resultados *r)
     r->relacion             = r->trabajoDesdeTierra / r->trabajoDesdeLuna;
 }
 
-/* Llena el arreglo puntos con la bitacora de vuelo: reparte
-   "cantidad" puntos entre la orbita baja y el punto de equilibrio
-   y calcula la gravedad y la velocidad en cada uno. */
+
 void calcularTrayecto(const Mision *m, PuntoTrayecto puntos[], int cantidad)
 {
     double r0 = RADIO_TIERRA + m->altura;
@@ -317,22 +272,19 @@ void calcularTrayecto(const Mision *m, PuntoTrayecto puntos[], int cantidad)
         puntos[i].distancia = r0 + i * separacion;
         puntos[i].gravedad  = gravedadNeta(puntos[i].distancia, m->distancia);
         if (fabs(puntos[i].gravedad) < 0.00005) {
-            puntos[i].gravedad = 0.0;   /* evita mostrar -0.0000 */
+            puntos[i].gravedad = 0.0;   
         }
         puntos[i].llega     = velocidadEnDistancia(m, puntos[i].distancia,
                                                    &puntos[i].velocidad);
     }
 }
 
-/* ============================================================
-   Etapa A - Primera Ley de Newton (inercia)
-   ============================================================ */
 
 void etapaInercia(const Mision *m, Sesion *s)
 {
     PuntoTrayecto puntos[PUNTOS_TRAYECTO];
     int i;
-    int ultimo = 0;     /* indice del ultimo punto al que llega */
+    int ultimo = 0;    
 
     calcularTrayecto(m, puntos, PUNTOS_TRAYECTO);
 
@@ -395,9 +347,7 @@ void etapaInercia(const Mision *m, Sesion *s)
     s->etapaVista[0] = 1;
 }
 
-/* ============================================================
-   Etapa B - Energia cinetica inicial
-   ============================================================ */
+
 
 void etapaEnergiaCinetica(const Mision *m, Sesion *s)
 {
@@ -420,8 +370,7 @@ void etapaEnergiaCinetica(const Mision *m, Sesion *s)
     printf("\n (1 GJ = mil millones de joules. La notacion 1.5e+12\n");
     printf("  significa 1.5 multiplicado por 10 elevado a la 12.)\n");
 
-    /* Comparacion opcional: muestra que K crece con el cuadrado
-       de la velocidad. */
+   
     while (leerSiNo("\n Desea comparar con otra velocidad? (s/n): ") == 's') {
         otraVelocidad = leerReal(" Velocidad a comparar en m/s",
                                  0.0, COMPARACION_MAX);
@@ -435,22 +384,14 @@ void etapaEnergiaCinetica(const Mision *m, Sesion *s)
     s->etapaVista[1] = 1;
 }
 
-/* ============================================================
-   Etapa C - Conservacion de la energia y trabajo minimo
-   ============================================================ */
 
-/* Muestra cuanto cambia el trabajo adicional si la velocidad
-   cambia en MARGEN_DATO m/s hacia abajo o hacia arriba. Sirve
-   para no presentar como exacto un resultado que es la resta de
-   dos numeros muy parecidos. */
 static void mostrarPrecision(const Mision *m)
 {
     double variacion[3] = { -MARGEN_DATO, 0.0, MARGEN_DATO };
     Mision prueba;
     Resultados rp;
     int i;
-    int llegan = 0;     /* en cuantos de los tres casos llega */
-
+    int llegan = 0;     
     printf("\n 5) Precision del resultado\n");
     printf("    Wext/m es la resta de dos numeros muy parecidos, por eso\n");
     printf("    cambia mucho si la velocidad cambia poco. Un dato dado\n");
@@ -460,7 +401,7 @@ static void mostrarPrecision(const Mision *m)
     printf("      Velocidad (m/s)   K/m (J/kg)     Wext/m (J/kg)\n");
 
     for (i = 0; i < 3; i++) {
-        prueba = *m;                    /* copia de la mision */
+        prueba = *m;                   
         prueba.velocidad = m->velocidad + variacion[i];
         calcularResultados(&prueba, &rp);
 
@@ -542,8 +483,7 @@ void etapaTrabajoMinimo(const Mision *m, Sesion *s)
 
     mostrarPrecision(m);
 
-    /* Se muestra redondeada hacia arriba para que, si el usuario
-       la carga en la mision, la nave efectivamente llegue. */
+    
     printf("\n Velocidad minima de inyeccion: %.1f m/s\n",
            ceil(r.velocidadMinima * 10.0) / 10.0);
     printf(" (la mision tiene %.1f m/s: diferencia de %+.1f m/s, que es\n",
@@ -561,9 +501,6 @@ void etapaTrabajoMinimo(const Mision *m, Sesion *s)
     s->etapaVista[2] = 1;
 }
 
-/* ============================================================
-   Etapa D - Comparacion Tierra-Luna / Luna-Tierra
-   ============================================================ */
 
 void etapaComparacion(const Mision *m, Sesion *s)
 {
@@ -612,13 +549,10 @@ void etapaComparacion(const Mision *m, Sesion *s)
     s->etapaVista[3] = 1;
 }
 
-/* ============================================================
-   Desafio: inyeccion de precision
-   ============================================================ */
 
 void jugarDesafio(Mision *m, Sesion *s)
 {
-    Mision prueba;      /* copia de la mision para probar velocidades */
+    Mision prueba;     
     Resultados r;
     double v;
     int n;
@@ -638,12 +572,12 @@ void jugarDesafio(Mision *m, Sesion *s)
            m->altura / 1000.0);
     printf("   (%.1f km) cargadas en la mision.\n", m->distancia / 1000.0);
 
-    /* Cada partida empieza de cero. */
+    
     s->cantIntentos   = 0;
     s->desafioJugado  = 1;
     s->desafioLogrado = 0;
 
-    prueba = *m;        /* copia todos los campos de la mision */
+    prueba = *m;       
 
     while (s->cantIntentos < MAX_INTENTOS && s->desafioLogrado == 0) {
         n = s->cantIntentos;
@@ -655,7 +589,7 @@ void jugarDesafio(Mision *m, Sesion *s)
         prueba.velocidad = v;
         calcularResultados(&prueba, &r);
 
-        /* Guardamos el intento en el arreglo de la sesion. */
+        
         s->intentos[n].velocidad = v;
         s->intentos[n].llego     = r.llega;
         s->intentos[n].exceso    = v - r.velocidadMinima;
@@ -693,9 +627,6 @@ void jugarDesafio(Mision *m, Sesion *s)
     }
 }
 
-/* ============================================================
-   Reporte final
-   ============================================================ */
 
 void mostrarReporte(const Mision *m, const Sesion *s)
 {
@@ -745,7 +676,7 @@ void mostrarReporte(const Mision *m, const Sesion *s)
         printf("   dato, asi que el estado anterior no es concluyente.\n");
     }
 
-    /* Recorremos el arreglo de etapas para contar las vistas. */
+    
     printf("\n Rendimiento del director de vuelo\n");
     for (i = 0; i < CANT_ETAPAS; i++) {
         if (s->etapaVista[i] == 1) {
@@ -792,14 +723,11 @@ void mostrarReporte(const Mision *m, const Sesion *s)
     dibujarLinea('=');
 }
 
-/* ============================================================
-   Supuestos y limites del modelo
-   ============================================================ */
 
 void mostrarSupuestos(const Mision *m)
 {
     Resultados r;
-    double diferenciaU;   /* J/kg entre el punto usado y L1 */
+    double diferenciaU;   
 
     calcularResultados(m, &r);
     diferenciaU = r.potencialEquilibrio
