@@ -13,10 +13,7 @@ void leerLinea(char texto[], int tam)
     int largo;
     int c;
 
-    /* fgets devuelve NULL si ya no hay nada para leer (por
-       ejemplo, si se cierra la entrada). En ese caso terminamos
-       el programa de forma ordenada para no quedar en un ciclo
-       infinito pidiendo datos. */
+
     if (fgets(texto, tam, stdin) == NULL) {
         printf("\nSe cerro la entrada de datos. Fin del programa.\n");
         exit(0);
