@@ -22,12 +22,10 @@ void leerLinea(char texto[], int tam)
     largo = (int) strlen(texto);
 
     if (largo > 0 && texto[largo - 1] == '\n') {
-        /* fgets guarda tambien el ENTER; lo borramos. */
+    
         texto[largo - 1] = '\0';
     } else {
-        /* La linea era mas larga que el arreglo. Leemos y
-           descartamos lo que sobro para que no moleste en la
-           proxima lectura. */
+        
         do {
             c = getchar();
         } while (c != '\n' && c != EOF);
@@ -41,19 +39,16 @@ void recortar(char texto[])
     int fin;
     int i;
 
-    /* Buscamos el primer caracter que no sea un espacio. */
     while (texto[inicio] == ' ' || texto[inicio] == '\t') {
         inicio++;
     }
 
-    /* Buscamos el ultimo caracter que no sea un espacio. */
     fin = (int) strlen(texto) - 1;
     while (fin >= inicio &&
            (texto[fin] == ' ' || texto[fin] == '\t' || texto[fin] == '\r')) {
         fin--;
     }
 
-    /* Corremos la parte util al principio del arreglo. */
     for (i = inicio; i <= fin; i++) {
         texto[i - inicio] = texto[i];
     }
@@ -72,7 +67,7 @@ int esEntero(const char texto[])
 
     while (texto[i] != '\0') {
         if (texto[i] < '0' || texto[i] > '9') {
-            return 0;               /* encontramos algo que no es digito */
+            return 0;          
         }
         digitos++;
         i++;
@@ -101,7 +96,7 @@ int esReal(const char texto[])
         } else if (texto[i] == '.' || texto[i] == ',') {
             separadores++;
         } else {
-            return 0;               /* letra o simbolo no permitido */
+            return 0;              
         }
         i++;
     }
@@ -160,8 +155,7 @@ double leerReal(const char mensaje[], double minimo, double maximo)
         } else if (!esReal(linea)) {
             mostrarError("Debe ingresar un numero, sin letras.");
         } else {
-            /* C usa el punto como separador decimal. Si el usuario
-               escribio una coma, la cambiamos por un punto. */
+         
             for (i = 0; linea[i] != '\0'; i++) {
                 if (linea[i] == ',') {
                     linea[i] = '.';
@@ -194,7 +188,7 @@ char leerSiNo(const char mensaje[])
         leerLinea(linea, TAM_LINEA);
         recortar(linea);
 
-        /* Solo vale una respuesta de UNA letra: s, S, n o N. */
+      
         if (strlen(linea) != 1) {
             mostrarError("Responda con la letra s (si) o n (no).");
         } else if (linea[0] == 's' || linea[0] == 'S') {
