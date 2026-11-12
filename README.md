@@ -93,48 +93,32 @@ El simulador utiliza un modelo simplificado para representar el movimiento de la
 
 Los valores de la Tierra corresponden a los datos utilizados por la cátedra. La masa y el radio de la Luna no están especificados en los datos del escenario y se incorporan como valores aproximados adoptados para el modelo.
 
-### Interpretación del punto de equilibrio
+### Punto de equilibrio gravitatorio
 
-En este programa, el punto de equilibrio es la posición sobre la línea Tierra-Luna en la que las magnitudes de las fuerzas gravitatorias ejercidas por ambos cuerpos sobre la nave son iguales. Se obtiene mediante:
-
-\[
-x = \frac{D}{1 + \sqrt{M_L/M_T}}
-\]
+En este programa, el punto de equilibrio es la posición sobre la línea que une los centros de la Tierra y la Luna en la que las magnitudes de las fuerzas gravitatorias ejercidas por ambos cuerpos sobre la nave son iguales. Se calcula dividiendo la distancia entre los centros de la Tierra y la Luna por la suma de uno más la raíz cuadrada del cociente entre la masa de la Luna y la masa de la Tierra.
 
 Donde:
 
-- `D` es la distancia entre los centros de la Tierra y la Luna.
-- `M_L` es la masa de la Luna.
-- `M_T` es la masa de la Tierra.
-- `x` es la distancia desde el centro de la Tierra hasta el punto de equilibrio.
+- D es la distancia entre los centros de la Tierra y la Luna.
+- ML es la masa de la Luna.
+- MT es la masa de la Tierra.
+- x es la distancia desde el centro de la Tierra hasta el punto de equilibrio.
 
-Esta posición corresponde al equilibrio de las fuerzas gravitatorias en el modelo estático utilizado. **No debe confundirse con el punto de Lagrange L1**, cuyo cálculo requiere considerar también el movimiento de rotación del sistema.
+Esta posición representa el punto donde las fuerzas gravitatorias se compensan en el modelo estático utilizado. No debe confundirse con el punto de Lagrange L1, cuyo cálculo requiere considerar también el movimiento de rotación del sistema Tierra-Luna.
 
 ### Cálculo del trabajo adicional
 
-El programa calcula la energía potencial gravitatoria por unidad de masa considerando la contribución de la Tierra y de la Luna. Para una posición `r` medida desde el centro terrestre:
+El programa calcula la energía potencial gravitatoria por unidad de masa, considerando la contribución de la Tierra y de la Luna. Para ello, se suman los aportes gravitatorios de ambos cuerpos. Cada aporte se obtiene multiplicando la constante de gravitación universal por la masa del cuerpo correspondiente y dividiendo ese resultado por la distancia entre la nave y dicho cuerpo. Ambos aportes tienen signo negativo.
 
-\[
-\frac{U(r)}{m} = -\frac{G M_T}{r} - \frac{G M_L}{D-r}
-\]
+La variación de energía potencial por unidad de masa se obtiene restando la energía potencial inicial a la energía potencial en el punto de equilibrio. Para calcularla, se considera que la posición inicial de la nave está a una distancia igual al radio terrestre más la altura de su órbita, medida desde el centro de la Tierra.
 
-La energía cinética inicial por unidad de masa es:
+La energía cinética inicial por unidad de masa se calcula multiplicando el cuadrado de la velocidad inicial por un medio.
 
-\[
-\frac{K}{m} = \frac{v^2}{2}
-\]
+Suponiendo que la nave alcanza el punto de equilibrio con velocidad final nula y aplicando el principio de conservación de la energía, el trabajo externo adicional mínimo por unidad de masa se obtiene restando la energía cinética inicial por unidad de masa a la variación de energía potencial. Si el resultado es negativo, se considera que no se necesita trabajo adicional, por lo que se toma un valor igual a cero.
 
-La variación de energía potencial por unidad de masa entre la órbita inicial y el punto de equilibrio se compara con la energía cinética disponible. El trabajo externo adicional mínimo se calcula como:
+Por último, la velocidad mínima teórica necesaria para alcanzar el punto de equilibrio con velocidad final nula se calcula como la raíz cuadrada del doble de la variación de energía potencial por unidad de masa.
 
-\[
-\frac{W_{ext}}{m} = \max\left(0,\frac{\Delta U}{m}-\frac{K}{m}\right)
-\]
-
-La velocidad mínima teórica para alcanzar el punto de equilibrio con velocidad final nula se obtiene a partir de la conservación de la energía:
-
-\[
-v_{min} = \sqrt{2\frac{\Delta U}{m}}
-\]
+Estas operaciones corresponden al modelo simplificado del programa y no representan una trayectoria orbital real ni contemplan maniobras de propulsión.
 
 El programa también presenta el trabajo necesario si la nave parte de una órbita circular baja, como referencia para analizar la maniobra TLI.
 
